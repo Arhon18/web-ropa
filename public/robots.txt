@@ -1,0 +1,7 @@
+# Robots.txt para web-ropa
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /checkout/
+
+Sitemap: https://web-ropa.com/sitemap.xml
