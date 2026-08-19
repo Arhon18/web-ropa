@@ -7,7 +7,8 @@ const STORAGE_KEYS = {
   WISHLIST: 'aura_wishlist_v1',
   THEME: 'aura_theme_v1',
   GDPR_CONSENT: 'aura_gdpr_consent_v1',
-  EXIT_POPUP_SHOWN: 'aura_exit_popup_dismissed_v1'
+  EXIT_POPUP_SHOWN: 'aura_exit_popup_dismissed_v1',
+  AUTH_USER: 'aura_auth_user_v1'
 };
 
 export const Storage = {
@@ -68,5 +69,19 @@ export const Storage = {
 
   dismissExitPopup() {
     this.set(STORAGE_KEYS.EXIT_POPUP_SHOWN, true);
+  },
+
+  getUser() {
+    return this.get(STORAGE_KEYS.AUTH_USER, null);
+  },
+
+  saveUser(user) {
+    this.set(STORAGE_KEYS.AUTH_USER, user);
+  },
+
+  clearUser() {
+    try {
+      localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
+    } catch (e) {}
   }
 };

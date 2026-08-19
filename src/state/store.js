@@ -11,6 +11,7 @@ class Store {
     this.listeners = new Map();
     
     this.state = {
+      user: Storage.getUser(),
       cart: Storage.getCart(),
       wishlist: Storage.getWishlist(),
       theme: Storage.getTheme(),
@@ -24,6 +25,8 @@ class Store {
       isCheckoutOpen: false,
       isOrderTrackerOpen: false,
       isSizeGuideOpen: false,
+      isAuthModalOpen: false,
+      authMode: 'login', // 'login', 'register', 'forgot'
       isLegalModalOpen: null // 'privacy', 'terms', 'returns'
     };
   }
@@ -224,6 +227,85 @@ class Store {
   closeOrderTracker() {
     this.state.isOrderTrackerOpen = false;
     this.notify('orderTracker:state', false);
+  }
+
+  // --- AUTENTICACIÓN Y GESTIÓN DE USUARIO ---
+
+  login(email, password, name = '') {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const displayName = name || cleanEmail.split('@')[0];
+    const capitalizedName = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+
+    const user = {
+      id: `usr_${Date.now()}`,
+      name: capitalizedName,
+      email: cleanEmail,
+      avatar: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop`,
+      memberSince: '2026',
+      token: `jwt_aura_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+    };
+
+    this.state.user = user;
+    Storage.saveUser(user);
+    this.closeAuth();
+    this.setRoute('home');
+    this.notify('user:updated', user);
+    this.notify('toast:message', {
+      title: `¡Bienvenido/a de nuevo, ${capitalizedName}!`,
+      message: 'Has iniciado sesión con éxito.',
+      type: 'success'
+    });
+
+    return { success: true, user };
+  }
+
+  register(name, email, password) {
+    const cleanName = (name || '').trim();
+    const cleanEmail = (email || '').trim().toLowerCase();
+
+    const user = {
+      id: `usr_${Date.now()}`,
+      name: cleanName || cleanEmail.split('@')[0],
+      email: cleanEmail,
+      avatar: `https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=200&auto=format&fit=crop`,
+      memberSince: '2026',
+      token: `jwt_aura_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
+    };
+
+    this.state.user = user;
+    Storage.saveUser(user);
+    this.closeAuth();
+    this.setRoute('home');
+    this.notify('user:updated', user);
+    this.notify('toast:message', {
+      title: `¡Cuenta creada con éxito!`,
+      message: `Bienvenido a la comunidad AURA Studio, ${user.name}.`,
+      type: 'success'
+    });
+
+    return { success: true, user };
+  }
+
+  logout() {
+    this.state.user = null;
+    Storage.clearUser();
+    this.notify('user:updated', null);
+    this.notify('toast:message', {
+      title: 'Sesión cerrada',
+      message: 'Esperamos verte de vuelta pronto.',
+      type: 'info'
+    });
+  }
+
+  openAuth(mode = 'login') {
+    this.state.authMode = mode;
+    this.state.isAuthModalOpen = true;
+    this.notify('auth:state', { isOpen: true, mode });
+  }
+
+  closeAuth() {
+    this.state.isAuthModalOpen = false;
+    this.notify('auth:state', { isOpen: false, mode: this.state.authMode });
   }
 }
 

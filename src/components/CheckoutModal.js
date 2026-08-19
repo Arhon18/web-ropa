@@ -11,8 +11,13 @@ import confetti from 'canvas-confetti';
 
 export function renderCheckoutModal(container) {
   const state = store.state;
+  const user = state.user;
   const metrics = store.getCartMetrics();
   const carriers = CONFIG.shipping.carriers;
+
+  const defaultEmail = user ? user.email : 'cliente@aurastudio.com';
+  const defaultFirstName = user ? user.name.split(' ')[0] : 'Elena';
+  const defaultLastName = user && user.name.split(' ').length > 1 ? user.name.split(' ').slice(1).join(' ') : 'García';
 
   container.innerHTML = `
     <div class="modal-overlay active" id="checkout-modal-overlay">
@@ -43,12 +48,12 @@ export function renderCheckoutModal(container) {
                 
                 <div class="form-group">
                   <label class="form-label" for="chk-email">Correo Electrónico (Para envío de recibo y rastreo)</label>
-                  <input type="email" id="chk-email" class="form-input" placeholder="tu-correo@ejemplo.com" required value="cliente@aurastudio.com" />
+                  <input type="email" id="chk-email" class="form-input" placeholder="tu-correo@ejemplo.com" required value="${defaultEmail}" />
                 </div>
 
                 <div style="display: flex; gap: 1rem; font-size: 0.82rem;">
                   <label style="display: flex; align-items: center; gap: 0.35rem; cursor: pointer;">
-                    <input type="checkbox" id="chk-guest" checked /> Continuar como <strong>Invitado (Guest Checkout)</strong>
+                    <input type="checkbox" id="chk-guest" ${user ? '' : 'checked'} /> Continuar como <strong>Invitado (Guest Checkout)</strong>
                   </label>
                 </div>
               </div>
@@ -63,11 +68,11 @@ export function renderCheckoutModal(container) {
                 <div class="form-row">
                   <div class="form-group">
                     <label class="form-label" for="chk-fname">Nombre</label>
-                    <input type="text" id="chk-fname" class="form-input" placeholder="Elena" value="Elena" required />
+                    <input type="text" id="chk-fname" class="form-input" placeholder="Elena" value="${defaultFirstName}" required />
                   </div>
                   <div class="form-group">
                     <label class="form-label" for="chk-lname">Apellidos</label>
-                    <input type="text" id="chk-lname" class="form-input" placeholder="García" value="García" required />
+                    <input type="text" id="chk-lname" class="form-input" placeholder="García" value="${defaultLastName}" required />
                   </div>
                 </div>
 

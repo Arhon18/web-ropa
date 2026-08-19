@@ -12,8 +12,16 @@ import './styles/components.css';
 import './styles/animations.css';
 
 // Lucide Icons
-import * as lucide from 'lucide';
-window.lucide = lucide;
+import { createIcons, icons } from 'lucide';
+window.lucide = {
+  createIcons: (options = {}) => {
+    try {
+      createIcons({ icons, ...options });
+    } catch (e) {
+      console.warn('Icon rendering error:', e);
+    }
+  }
+};
 
 // Estado, Datos y Utilidades
 import { store } from './state/store.js';
@@ -38,6 +46,7 @@ import { SocialProofToasts } from './components/SocialProofToasts.js';
 import { ExitIntentPopup } from './components/ExitIntentPopup.js';
 import { CookieBanner } from './components/CookieBanner.js';
 import { LegalModals } from './components/LegalModals.js';
+import { renderAuthModal } from './components/AuthModal.js';
 
 class App {
   constructor() {
@@ -135,9 +144,50 @@ class App {
       }
     });
 
+    store.subscribe('auth:state', ({ isOpen, mode }) => {
+      if (isOpen) {
+        renderAuthModal(this.modalContainer, mode);
+      } else {
+        this.modalContainer.innerHTML = '';
+      }
+    });
+
+    store.subscribe('user:updated', () => {
+      this.renderHeader();
+      if (store.state.isCheckoutOpen) {
+        renderCheckoutModal(this.modalContainer);
+      }
+    });
+
+    store.subscribe('toast:message', (toastData) => {
+      this.showToastNotification(toastData);
+    });
+
     this.drawerBackdrop.addEventListener('click', () => {
       store.closeDrawer();
     });
+  }
+
+  showToastNotification({ title, message, type = 'info' }) {
+    const toast = document.createElement('div');
+    toast.className = 'social-toast';
+    toast.style.borderColor = type === 'success' ? '#10b981' : 'var(--text-accent)';
+    toast.innerHTML = `
+      <div style="width: 32px; height: 32px; border-radius: 50%; background: ${type === 'success' ? '#10b981' : 'var(--text-accent)'}; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.9rem;">
+        ${type === 'success' ? '✓' : 'ℹ'}
+      </div>
+      <div class="social-toast-text">
+        <strong style="display: block; font-size: 0.88rem;">${title}</strong>
+        <span style="font-size: 0.78rem; color: var(--text-secondary);">${message}</span>
+      </div>
+    `;
+
+    this.socialProofEl.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.animation = 'toastOut 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards';
+      setTimeout(() => toast.remove(), 400);
+    }, 4500);
   }
 
   renderHeader() {

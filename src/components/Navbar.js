@@ -9,6 +9,7 @@ export function renderNavbar(container) {
   const state = store.state;
   const metrics = store.getCartMetrics();
   const wishlistCount = state.wishlist.length;
+  const user = state.user;
 
   container.innerHTML = `
     <div class="container navbar">
@@ -26,13 +27,7 @@ export function renderNavbar(container) {
         <a href="#camisas" class="nav-link" data-category="camisas">Lino & Seda</a>
       </nav>
 
-      <!-- Barra de Búsqueda Integrada -->
-      <div class="nav-search-wrap" style="position: relative; max-width: 240px; width: 100%; display: none;" id="nav-search-container">
-        <input type="search" placeholder="Buscar prendas, lino, abrigos..." class="form-input" id="global-search-input" style="padding: 0.45rem 0.85rem; font-size: 0.82rem; border-radius: var(--radius-full);" />
-        <div id="search-results-dropdown" class="search-dropdown hidden" style="position: absolute; top: 110%; left: 0; right: 0; background: var(--bg-surface); border: 1px solid var(--border-strong); border-radius: var(--radius-md); box-shadow: var(--shadow-lg); z-index: 100; max-height: 300px; overflow-y: auto;"></div>
-      </div>
-
-      <!-- Acciones de Usuario (Tema, Wishlist, Carrito) -->
+      <!-- Acciones de Usuario (Autenticación, Tema, Wishlist, Carrito) -->
       <div class="nav-actions">
         <!-- Toggle Dark/Light Mode -->
         <button class="btn-icon" id="theme-toggle-btn" title="Alternar Modo Oscuro / Claro" aria-label="Cambiar tema">
@@ -52,6 +47,39 @@ export function renderNavbar(container) {
             ${metrics.itemCount}
           </span>
         </button>
+
+        <!-- Módulo de Autenticación / Perfil de Usuario -->
+        <div class="nav-user-container" style="position: relative;">
+          ${user ? `
+            <button class="user-profile-btn" id="nav-user-profile-btn" title="Cuenta de ${user.name}" style="display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.75rem 0.35rem 0.4rem; border: 1px solid var(--border-strong); border-radius: var(--radius-full); background: var(--bg-surface); cursor: pointer; transition: all var(--transition-fast);">
+              <img src="${user.avatar}" alt="${user.name}" style="width: 28px; height: 28px; border-radius: 50%; object-fit: cover;" />
+              <span style="font-size: 0.85rem; font-weight: 700; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${user.name}</span>
+              <i data-lucide="chevron-down" style="width: 14px; height: 14px; color: var(--text-muted);"></i>
+            </button>
+
+            <!-- Menú Desplegable de Usuario -->
+            <div class="user-dropdown-menu hidden" id="nav-user-dropdown" style="position: absolute; top: calc(100% + 8px); right: 0; width: 220px; background: var(--bg-surface); border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); box-shadow: var(--shadow-lg); z-index: 100; padding: 0.5rem 0; animation: fadeIn 0.2s ease;">
+              <div style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-subtle);">
+                <strong style="display: block; font-size: 0.88rem;">${user.name}</strong>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">${user.email}</span>
+              </div>
+              <button class="user-menu-item" id="user-menu-orders" style="width: 100%; display: flex; align-items: center; gap: 0.6rem; padding: 0.65rem 1rem; font-size: 0.85rem; text-align: left; background: none; border: none; cursor: pointer; color: var(--text-secondary); transition: background var(--transition-fast);">
+                <i data-lucide="package" style="width: 16px; height: 16px;"></i> Mis Pedidos
+              </button>
+              <button class="user-menu-item" id="user-menu-wishlist" style="width: 100%; display: flex; align-items: center; gap: 0.6rem; padding: 0.65rem 1rem; font-size: 0.85rem; text-align: left; background: none; border: none; cursor: pointer; color: var(--text-secondary); transition: background var(--transition-fast);">
+                <i data-lucide="heart" style="width: 16px; height: 16px;"></i> Lista de Deseos
+              </button>
+              <div style="height: 1px; background: var(--border-subtle); margin: 0.3rem 0;"></div>
+              <button class="user-menu-item" id="user-menu-logout" style="width: 100%; display: flex; align-items: center; gap: 0.6rem; padding: 0.65rem 1rem; font-size: 0.85rem; text-align: left; background: none; border: none; cursor: pointer; color: #ef4444; transition: background var(--transition-fast);">
+                <i data-lucide="log-out" style="width: 16px; height: 16px;"></i> Cerrar Sesión
+              </button>
+            </div>
+          ` : `
+            <button class="btn btn-primary" id="nav-login-btn" style="padding: 0.5rem 1.1rem; font-size: 0.85rem; gap: 0.4rem;">
+              <i data-lucide="user" style="width: 16px; height: 16px;"></i> Iniciar Sesión
+            </button>
+          `}
+        </div>
       </div>
     </div>
   `;
@@ -112,6 +140,47 @@ function attachNavbarListeners(container) {
   if (wishlistBtn) {
     wishlistBtn.addEventListener('click', () => {
       store.setRoute('catalog');
+    });
+  }
+
+  // Auth: Login Button Trigger
+  const loginBtn = container.querySelector('#nav-login-btn');
+  if (loginBtn) {
+    loginBtn.addEventListener('click', () => {
+      store.openAuth('login');
+    });
+  }
+
+  // Auth: User Dropdown Toggle
+  const userProfileBtn = container.querySelector('#nav-user-profile-btn');
+  const userDropdown = container.querySelector('#nav-user-dropdown');
+
+  if (userProfileBtn && userDropdown) {
+    userProfileBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      userDropdown.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!userDropdown.contains(e.target) && e.target !== userProfileBtn) {
+        userDropdown.classList.add('hidden');
+      }
+    });
+
+    // Menu options
+    container.querySelector('#user-menu-orders')?.addEventListener('click', () => {
+      userDropdown.classList.add('hidden');
+      store.openOrderTracker();
+    });
+
+    container.querySelector('#user-menu-wishlist')?.addEventListener('click', () => {
+      userDropdown.classList.add('hidden');
+      store.setRoute('catalog');
+    });
+
+    container.querySelector('#user-menu-logout')?.addEventListener('click', () => {
+      userDropdown.classList.add('hidden');
+      store.logout();
     });
   }
 }
