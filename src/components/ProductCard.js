@@ -2,12 +2,11 @@
  * Componente Tarjeta de Producto (Catálogo)
  */
 
-import { formatCurrency, formatDiscount } from '../utils/formatters.js';
+import { formatCurrency } from '../utils/formatters.js';
 import { store } from '../state/store.js';
 
 export function renderProductCard(product) {
   const isWishlisted = store.isInWishlist(product.id);
-  const discountPercent = formatDiscount(product.originalPrice, product.price);
   const defaultColor = product.colors[0];
   const mainImage = defaultColor.images[0];
   const hoverImage = defaultColor.images[1] || mainImage;
@@ -30,7 +29,6 @@ export function renderProductCard(product) {
         <!-- Badges de Estado -->
         <div class="product-card-badges">
           ${product.badge ? `<span class="badge ${product.badgeType === 'sale' ? 'badge-sale' : 'badge-new'}">${product.badge}</span>` : ''}
-          ${discountPercent > 0 ? `<span class="badge badge-sale">-${discountPercent}%</span>` : ''}
           ${isLowStock ? `<span class="badge badge-low-stock"><span class="stock-dot low"></span> ¡Pocas Unidades!</span>` : ''}
           ${isOutOfStock ? `<span class="badge badge-out-stock">Agotado</span>` : ''}
         </div>

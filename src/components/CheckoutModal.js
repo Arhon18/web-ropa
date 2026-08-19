@@ -287,6 +287,24 @@ function attachCheckoutListeners(container) {
         try { confetti({ particleCount: 100, spread: 80, origin: { y: 0.6 } }); } catch (e) {}
 
         const trackingNumber = `AURA-ORD-${Math.floor(100000 + Math.random() * 900000)}`;
+        store.addOrder({
+          id: trackingNumber,
+          createdAt: new Date().toISOString(),
+          status: 'Recibido',
+          total: metrics.total,
+          shippingMethod: store.state.selectedShippingMethod.name,
+          customer: {
+            name: `${container.querySelector('#chk-fname')?.value || ''} ${container.querySelector('#chk-lname')?.value || ''}`.trim(),
+            email
+          },
+          items: store.state.cart.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price,
+            size: item.size,
+            color: item.color.name
+          }))
+        });
 
         // Mostrar Pantalla de Confirmación de Pedido
         bodyContent.innerHTML = `

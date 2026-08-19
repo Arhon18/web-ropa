@@ -69,6 +69,7 @@ export function renderNavbar(container) {
               <button class="user-menu-item" id="user-menu-wishlist" style="width: 100%; display: flex; align-items: center; gap: 0.6rem; padding: 0.65rem 1rem; font-size: 0.85rem; text-align: left; background: none; border: none; cursor: pointer; color: var(--text-secondary); transition: background var(--transition-fast);">
                 <i data-lucide="heart" style="width: 16px; height: 16px;"></i> Lista de Deseos
               </button>
+              ${user.isAdmin ? `<button class="user-menu-item" id="user-menu-admin" style="width: 100%; display: flex; align-items: center; gap: 0.6rem; padding: 0.65rem 1rem; font-size: 0.85rem; text-align: left; background: none; border: none; cursor: pointer; color: var(--text-secondary); transition: background var(--transition-fast);"><i data-lucide="layout-dashboard" style="width: 16px; height: 16px;"></i> Panel de administración</button>` : ''}
               <div style="height: 1px; background: var(--border-subtle); margin: 0.3rem 0;"></div>
               <button class="user-menu-item" id="user-menu-logout" style="width: 100%; display: flex; align-items: center; gap: 0.6rem; padding: 0.65rem 1rem; font-size: 0.85rem; text-align: left; background: none; border: none; cursor: pointer; color: #ef4444; transition: background var(--transition-fast);">
                 <i data-lucide="log-out" style="width: 16px; height: 16px;"></i> Cerrar Sesión
@@ -176,6 +177,11 @@ function attachNavbarListeners(container) {
     container.querySelector('#user-menu-wishlist')?.addEventListener('click', () => {
       userDropdown.classList.add('hidden');
       store.setRoute('catalog');
+    });
+
+    container.querySelector('#user-menu-admin')?.addEventListener('click', () => {
+      userDropdown.classList.add('hidden');
+      store.setRoute('admin');
     });
 
     container.querySelector('#user-menu-logout')?.addEventListener('click', () => {

@@ -34,7 +34,8 @@ export function renderAuthModal(container, initialMode = 'login') {
   function getTabsAndFormHTML() {
     return `
       <!-- Pestañas Iniciar Sesión / Crear Cuenta -->
-      <div class="auth-tabs" style="display: flex; border-bottom: 2px solid var(--border-subtle); margin-bottom: 1.75rem;">
+      ${currentMode === 'admin' ? `<div style="padding: 0.9rem 1rem; margin-bottom: 1.25rem; background: var(--bg-surface-subtle); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);"><strong>Acceso de administrador</strong><p style="margin: 0.3rem 0 0; color: var(--text-secondary); font-size: 0.8rem;">Gestiona productos, descuentos y pedidos desde un área privada.</p></div>` : ''}
+      <div class="auth-tabs" style="display: ${currentMode === 'admin' ? 'none' : 'flex'}; border-bottom: 2px solid var(--border-subtle); margin-bottom: 1.75rem;">
         <button class="auth-tab-btn ${currentMode === 'login' ? 'active' : ''}" id="tab-btn-login" style="flex: 1; padding: 0.75rem 0; font-weight: 700; font-size: 0.95rem; text-align: center; border-bottom: 2px solid ${currentMode === 'login' ? 'var(--text-primary)' : 'transparent'}; margin-bottom: -2px; color: ${currentMode === 'login' ? 'var(--text-primary)' : 'var(--text-muted)'}; transition: all var(--transition-fast);">
           Iniciar Sesión
         </button>
@@ -80,7 +81,7 @@ export function renderAuthModal(container, initialMode = 'login') {
 
         <div class="form-group">
           <label class="form-label" for="auth-email">Correo Electrónico</label>
-          <input type="email" id="auth-email" class="form-input" placeholder="tu-correo@ejemplo.com" required value="sofia.martinez@aurastudio.com" />
+            <input type="email" id="auth-email" class="form-input" placeholder="tu-correo@ejemplo.com" required value="${currentMode === 'admin' ? 'admin@aurastudio.com' : 'sofia.martinez@aurastudio.com'}" />
         </div>
 
         <div class="form-group">
@@ -93,7 +94,7 @@ export function renderAuthModal(container, initialMode = 'login') {
             ` : ''}
           </div>
           <div style="position: relative;">
-            <input type="password" id="auth-password" class="form-input" placeholder="••••••••" required value="aura2026pass" style="padding-right: 40px;" />
+            <input type="password" id="auth-password" class="form-input" placeholder="••••••••" required value="${currentMode === 'admin' ? 'admin2026' : 'aura2026pass'}" style="padding-right: 40px;" />
             <button type="button" id="toggle-password-btn" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: var(--text-muted);">
               <i data-lucide="eye" style="width: 18px; height: 18px;"></i>
             </button>
@@ -130,7 +131,10 @@ export function renderAuthModal(container, initialMode = 'login') {
         <div id="auth-error-feedback" style="font-size: 0.82rem; color: #ef4444; margin-bottom: 1rem; display: none;"></div>
 
         <button type="submit" class="btn btn-primary btn-block btn-lg" id="auth-submit-btn">
-          ${currentMode === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta Gratuita'}
+          ${currentMode === 'admin' ? 'Entrar al panel' : currentMode === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta Gratuita'}
+        </button>
+        <button type="button" id="auth-admin-link" style="display: flex; align-items: center; justify-content: center; gap: 0.4rem; width: 100%; margin-top: 1rem; color: var(--text-secondary); font-size: 0.8rem; background: none; border: none; cursor: pointer;">
+          <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i> Acceso de administrador
         </button>
       </form>
     `;
@@ -201,6 +205,11 @@ export function renderAuthModal(container, initialMode = 'login') {
       render();
     });
 
+    container.querySelector('#auth-admin-link')?.addEventListener('click', () => {
+      currentMode = 'admin';
+      render();
+    });
+
     // Toggle password visibility
     const togglePwdBtn = container.querySelector('#toggle-password-btn');
     const pwdInput = container.querySelector('#auth-password');
@@ -257,7 +266,16 @@ export function renderAuthModal(container, initialMode = 'login') {
         submitBtn.textContent = currentMode === 'login' ? 'Iniciando sesión...' : 'Creando cuenta...';
 
         setTimeout(() => {
-          if (currentMode === 'login') {
+          if (currentMode === 'admin') {
+            const result = store.adminLogin(email, password);
+            if (!result.success) {
+              showError(result.message);
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Entrar al panel';
+            } else {
+              window.location.assign('/admin.html');
+            }
+          } else if (currentMode === 'login') {
             store.login(email, password, name);
           } else {
             store.register(name, email, password);

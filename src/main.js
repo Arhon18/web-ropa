@@ -47,6 +47,7 @@ import { ExitIntentPopup } from './components/ExitIntentPopup.js';
 import { CookieBanner } from './components/CookieBanner.js';
 import { LegalModals } from './components/LegalModals.js';
 import { renderAuthModal } from './components/AuthModal.js';
+import { renderAdminPanel } from './components/AdminPanel.js';
 
 class App {
   constructor() {
@@ -78,7 +79,6 @@ class App {
 
     // Inicializar Micro-Interacciones y Cumplimiento Legal
     SocialProofToasts.init(this.socialProofEl);
-    ExitIntentPopup.init(this.exitIntentEl);
     CookieBanner.init(this.cookieBannerEl);
 
     // Suscribirse a cambios en el Estado
@@ -86,6 +86,10 @@ class App {
 
     // Render inicial según ruta
     this.renderView();
+
+    if (new URLSearchParams(window.location.search).has('admin')) {
+      store.openAuth('admin');
+    }
 
     // Listeners globales (Tracking en Header)
     document.getElementById('header-track-order-btn')?.addEventListener('click', () => {
@@ -204,6 +208,9 @@ class App {
       this.renderCatalogView();
     } else if (route === 'pdp') {
       this.renderProductDetailView();
+    } else if (route === 'admin') {
+      document.title = 'Administración | AURA Studio';
+      renderAdminPanel(this.mainEl);
     }
   }
 
@@ -211,9 +218,10 @@ class App {
     document.title = 'AURA Studio | Alta Moda Contemporánea & Colecciones Exclusivas';
 
     const activeCat = store.state.activeCategory;
+    const products = store.getProducts();
     const filteredProducts = activeCat === 'all' 
-      ? PRODUCTS 
-      : PRODUCTS.filter(p => p.category === activeCat);
+      ? products 
+      : products.filter(p => p.category === activeCat);
 
     this.mainEl.innerHTML = `
       <!-- Hero Banner -->
@@ -249,14 +257,14 @@ class App {
       </section>
 
       <!-- Reseñas Generales y Prueba Social -->
-      ${renderReviewsSection(PRODUCTS[0])}
+      ${renderReviewsSection(products[0] || PRODUCTS[0])}
 
       <!-- Banner de Newsletter con Exit-Intent -->
       <section style="background-color: var(--bg-surface-subtle); padding: 4rem 0; border-top: 1px solid var(--border-subtle);">
         <div class="container" style="max-width: 680px; text-align: center;">
           <span class="badge badge-new" style="margin-bottom: 0.75rem;">Mundo AURA</span>
           <h2 style="font-size: 2rem;">Únete a Nuestro Círculo Privado</h2>
-          <p style="margin: 0.75rem 0 1.5rem;">Recibe acceso anticipado a desfiles, lanzamientos cápsula y un <strong>10% de descuento de cortesía</strong> en tu primer pedido.</p>
+          <p style="margin: 0.75rem 0 1.5rem;">Recibe acceso anticipado a desfiles y lanzamientos cápsula directamente en tu correo.</p>
           
           <form id="newsletter-form" style="display: flex; gap: 0.5rem; max-width: 480px; margin: 0 auto;">
             <input type="email" placeholder="Ingresa tu correo electrónico..." required class="form-input" id="newsletter-email" style="flex: 1; border-radius: var(--radius-full);" />
@@ -289,7 +297,7 @@ class App {
     if (newsletterForm && newsletterFeedback) {
       newsletterForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        newsletterFeedback.textContent = '✨ ¡Gracias por unirte! Hemos enviado tu código BIENVENIDA10 a tu email.';
+        newsletterFeedback.textContent = 'Gracias por unirte. Te avisaremos de nuestras próximas colecciones.';
         newsletterFeedback.style.display = 'block';
         newsletterForm.reset();
       });
@@ -301,7 +309,7 @@ class App {
   }
 
   renderProductDetailView() {
-    const product = store.state.selectedProduct || PRODUCTS[0];
+    const product = store.state.selectedProduct || store.getProducts()[0] || PRODUCTS[0];
 
     // Inicializar variantes seleccionadas
     this.pdpSelectedColor = product.colors[0];

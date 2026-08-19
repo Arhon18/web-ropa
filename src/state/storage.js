@@ -9,6 +9,9 @@ const STORAGE_KEYS = {
   GDPR_CONSENT: 'aura_gdpr_consent_v1',
   EXIT_POPUP_SHOWN: 'aura_exit_popup_dismissed_v1',
   AUTH_USER: 'aura_auth_user_v1'
+  ,PRODUCTS: 'aura_products_v1'
+  ,COUPONS: 'aura_coupons_v1'
+  ,ORDERS: 'aura_orders_v1'
 };
 
 export const Storage = {
@@ -83,5 +86,29 @@ export const Storage = {
     try {
       localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
     } catch (e) {}
+  },
+
+  getProducts(defaultValue = []) {
+    return this.get(STORAGE_KEYS.PRODUCTS, defaultValue);
+  },
+
+  saveProducts(products) {
+    this.set(STORAGE_KEYS.PRODUCTS, products);
+  },
+
+  getCoupons(defaultValue = {}) {
+    return this.get(STORAGE_KEYS.COUPONS, defaultValue);
+  },
+
+  saveCoupons(coupons) {
+    this.set(STORAGE_KEYS.COUPONS, coupons);
+  },
+
+  getOrders() {
+    return this.get(STORAGE_KEYS.ORDERS, []);
+  },
+
+  saveOrders(orders) {
+    this.set(STORAGE_KEYS.ORDERS, orders);
   }
 };

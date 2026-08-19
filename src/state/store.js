@@ -12,6 +12,7 @@ class Store {
     
     this.state = {
       user: Storage.getUser(),
+      products: Storage.getProducts(PRODUCTS),
       cart: Storage.getCart(),
       wishlist: Storage.getWishlist(),
       theme: Storage.getTheme(),
@@ -110,9 +111,9 @@ class Store {
 
     const subtotalAfterDiscount = Math.max(0, rawSubtotal - discount);
     
-    // Cálculo de umbral de envío gratis
+    // El envío solo es gratuito cuando el administrador activa un cupón específico.
     const threshold = CONFIG.store.freeShippingThreshold;
-    const isFreeShipping = subtotalAfterDiscount >= threshold || (this.state.appliedCoupon && this.state.appliedCoupon.freeShipping);
+    const isFreeShipping = Boolean(this.state.appliedCoupon?.freeShipping);
     
     let shippingCost = 0;
     if (!isFreeShipping && rawSubtotal > 0) {
@@ -121,7 +122,7 @@ class Store {
 
     const total = subtotalAfterDiscount + shippingCost;
     const remainingForFreeShipping = Math.max(0, threshold - subtotalAfterDiscount);
-    const progressPercent = Math.min(100, (subtotalAfterDiscount / threshold) * 100);
+    const progressPercent = 0;
 
     return {
       rawSubtotal,
@@ -138,9 +139,10 @@ class Store {
 
   applyCoupon(code) {
     const cleanCode = (code || '').trim().toUpperCase();
-    const coupon = CONFIG.coupons[cleanCode];
+    const coupons = Storage.getCoupons(CONFIG.coupons);
+    const coupon = coupons[cleanCode];
 
-    if (coupon) {
+    if (coupon?.active !== false) {
       this.state.appliedCoupon = { code: cleanCode, ...coupon };
       this.notify('coupon:applied', this.state.appliedCoupon);
       this.notify('cart:updated', this.state.cart);
@@ -148,6 +150,72 @@ class Store {
     } else {
       return { success: false, message: 'El código de cupón no es válido o ha expirado.' };
     }
+  }
+
+  getProducts() {
+    return this.state.products;
+  }
+
+  getCoupons() {
+    const savedCoupons = Storage.getCoupons(CONFIG.coupons);
+    return Object.entries(savedCoupons).map(([code, coupon]) => ({ code, ...coupon }));
+  }
+
+  getOrders() {
+    return Storage.getOrders();
+  }
+
+  addProduct(product) {
+    const newProduct = {
+      id: `prod-${Date.now()}`,
+      sku: `AUR-ADMIN-${Date.now()}`,
+      slug: product.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      name: product.name,
+      subtitle: 'Nueva incorporación AURA Studio',
+      category: product.category,
+      price: product.price,
+      originalPrice: product.price,
+      rating: 0,
+      reviewCount: 0,
+      badge: 'Nuevo',
+      badgeType: 'new',
+      isNew: true,
+      description: 'Prenda añadida desde el panel de administración.',
+      materials: ['Material premium'],
+      selectedMaterial: 'Material premium',
+      colors: [{ id: 'default', name: 'Color principal', hex: '#18181b', images: [product.image || 'https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?q=80&w=900&auto=format&fit=crop'] }],
+      sizes: [{ size: 'Única', stock: product.stock }],
+      specifications: [],
+      faqs: []
+    };
+    this.state.products.push(newProduct);
+    Storage.saveProducts(this.state.products);
+    this.notify('products:updated', this.state.products);
+  }
+
+  addCoupon(code, discountPercent, description) {
+    const coupons = Storage.getCoupons(CONFIG.coupons);
+    coupons[code.trim().toUpperCase()] = { discountPercent, description, active: true };
+    Storage.saveCoupons(coupons);
+  }
+
+  toggleCoupon(code) {
+    const coupons = Storage.getCoupons(CONFIG.coupons);
+    if (!coupons[code]) return;
+    coupons[code].active = coupons[code].active === false;
+    Storage.saveCoupons(coupons);
+  }
+
+  deleteCoupon(code) {
+    const coupons = Storage.getCoupons(CONFIG.coupons);
+    delete coupons[code];
+    Storage.saveCoupons(coupons);
+  }
+
+  addOrder(order) {
+    const orders = this.getOrders();
+    orders.unshift(order);
+    Storage.saveOrders(orders);
   }
 
   removeCoupon() {
@@ -191,7 +259,7 @@ class Store {
   setRoute(route, productId = null) {
     this.state.currentRoute = route;
     if (productId) {
-      const prod = PRODUCTS.find(p => p.id === productId || p.slug === productId);
+      const prod = this.state.products.find(p => p.id === productId || p.slug === productId);
       if (prod) this.state.selectedProduct = prod;
     }
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -256,6 +324,19 @@ class Store {
       type: 'success'
     });
 
+    return { success: true, user };
+  }
+
+  adminLogin(email, password) {
+    if (email.trim().toLowerCase() !== 'admin@aurastudio.com' || password !== 'admin2026') {
+      return { success: false, message: 'Credenciales de administrador incorrectas.' };
+    }
+    const user = { id: 'admin_aura', name: 'Administrador', email: 'admin@aurastudio.com', isAdmin: true, avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?q=80&w=200&auto=format&fit=crop', memberSince: '2026' };
+    this.state.user = user;
+    Storage.saveUser(user);
+    this.closeAuth();
+    this.setRoute('admin');
+    this.notify('user:updated', user);
     return { success: true, user };
   }
 

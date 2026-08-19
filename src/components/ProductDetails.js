@@ -2,12 +2,11 @@
  * Componente Panel de Compra y Detalles de Producto (PDP)
  */
 
-import { formatCurrency, formatDiscount } from '../utils/formatters.js';
+import { formatCurrency } from '../utils/formatters.js';
 import { store } from '../state/store.js';
 import { ShippingCalculator } from './ShippingCalculator.js';
 
 export function renderProductDetails(product, selectedColor, selectedSize, selectedMaterial, quantity) {
-  const discountPercent = formatDiscount(product.originalPrice, product.price);
   const sizeObj = product.sizes.find(s => s.size === selectedSize) || product.sizes[0];
   const stock = sizeObj ? sizeObj.stock : 0;
   const isLowStock = stock > 0 && stock <= 3;
@@ -36,8 +35,6 @@ export function renderProductDetails(product, selectedColor, selectedSize, selec
       <!-- Precios -->
       <div class="pdp-price-wrap">
         <span class="pdp-current-price">${formatCurrency(product.price)}</span>
-        ${product.originalPrice ? `<span class="pdp-original-price">${formatCurrency(product.originalPrice)}</span>` : ''}
-        ${discountPercent > 0 ? `<span class="pdp-discount-badge">Ahorras ${discountPercent}%</span>` : ''}
       </div>
 
       <!-- Indicador Dinámico de Stock en Tiempo Real -->

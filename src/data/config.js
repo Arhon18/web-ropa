@@ -103,9 +103,5 @@ export const CONFIG = {
   },
 
   // Cupones de Descuento Activos
-  coupons: {
-    'BIENVENIDA10': { discountPercent: 10, description: '10% de descuento en tu primera compra' },
-    'AURA2026': { discountPercent: 15, description: '15% de descuento especial de temporada' },
-    'ENVIOVIP': { freeShipping: true, description: 'Envío gratis asegurado' }
-  }
+  coupons: {}
 };
